@@ -1,28 +1,28 @@
 // Clean, elegant white theme with gold accents for Spiš Castle Audio Guide
 export const Colors = {
   // Light theme backgrounds
-  background: '#FDFAF3',
-  backgroundLight: '#2D241E',
-  backgroundCard: '#2D241E',
-  cardBg: '#2D241E',
+  background: '#FDFBF7',
+  backgroundLight: '#F5F5DC',
+  backgroundCard: '#F5F5DC',
+  cardBg: '#F5F5DC',
   
   // Gold/Yellow accent
-  accent: '#C8A84E',
-  accentLight: '#E8D48A',
-  accentDark: '#A08030',
+  accent: '#D4AF37',
+  accentLight: '#EDD892',
+  accentDark: '#8F7320',
   
   // Text
   text: {
-    primary: '#1A1A1A',
+    primary: '#2D241E',
     secondary: '#666666',
     light: '#999999',
-    accent: '#C8A84E',
-    dark: '#1A1A1A',
+    accent: '#D4AF37',
+    dark: '#2D241E',
   },
   
   // Utility  
-  white: '#2D241E',
-  black: '#1A1A1A',
+  white: '#F5F5DC',
+  black: '#2D241E',
   transparent: 'transparent',
   overlay: 'rgba(0, 0, 0, 0.4)',
   overlayDark: 'rgba(0, 0, 0, 0.6)',
