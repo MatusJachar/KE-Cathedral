@@ -1,0 +1,11 @@
+colors_file = "frontend/constants/Colors.ts"
+content = open(colors_file, "r", encoding="utf-8").read()
+content = content.replace("'#1A1A2E'", "'#FDFBF7'")
+content = content.replace("'#D4A017'", "'#D4AF37'")
+content = content.replace("#1A1A2E", "#FDFBF7")
+content = content.replace("#D4A017", "#D4AF37")
+content = content.replace("#2C2C54", "#F5F5DC")
+content = content.replace("#ffffff", "#2D241E")
+content = content.replace("#FFFFFF", "#2D241E")
+open(colors_file, "w", encoding="utf-8").write(content)
+print("DONE!")

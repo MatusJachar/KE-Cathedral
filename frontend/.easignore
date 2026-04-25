@@ -1,0 +1,12 @@
+node_modules/
+.git/
+.expo/
+.metro-cache/
+android/
+ios/
+*.log
+.DS_Store
+
+export
+../backend
+../export
