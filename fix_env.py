@@ -1,0 +1,5 @@
+content = open("backend/.env", "r", encoding="utf-8").read()
+content = content.replace("DB_NAME=spis_castle_paid", "DB_NAME=ke_cathedral")
+content = content.replace("JWT_SECRET=spissky-hrad-secret-2024", "JWT_SECRET=ke-cathedral-secret-2024")
+open("backend/.env", "w", encoding="utf-8").write(content)
+print("DONE!")

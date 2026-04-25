@@ -1,0 +1,5 @@
+content = open("backend/Dockerfile", "r", encoding="utf-8").read()
+content = content.replace("EXPOSE 8001", "EXPOSE 8003")
+content = content.replace('"--port", "8001"', '"--port", "8003"')
+open("backend/Dockerfile", "w", encoding="utf-8").write(content)
+print("DONE!")
