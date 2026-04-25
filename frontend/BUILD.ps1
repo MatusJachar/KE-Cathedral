@@ -1,7 +1,7 @@
 # BUILD.ps1 - Spusti tento skript namiesto priameho "eas build"
 # Zabezpeci male archiv (~50MB namiesto 1.5GB)
 
-Write-Host "=== SPIS CASTLE BUILD SCRIPT ===" -ForegroundColor Yellow
+Write-Host "=== KE CATHEDRAL BUILD SCRIPT ===" -ForegroundColor Yellow
 
 # 1. Git push
 Write-Host "`n[1/4] Git push..." -ForegroundColor Cyan

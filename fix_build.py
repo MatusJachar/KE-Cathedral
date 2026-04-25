@@ -1,0 +1,5 @@
+content = open("frontend/BUILD.ps1", "r", encoding="utf-8").read()
+content = content.replace("SPIS CASTLE BUILD SCRIPT", "KE CATHEDRAL BUILD SCRIPT")
+content = content.replace("spissky-hrad-audio-guide", "ke-cathedral-audio-guide")
+open("frontend/BUILD.ps1", "w", encoding="utf-8").write(content)
+print("DONE!")
