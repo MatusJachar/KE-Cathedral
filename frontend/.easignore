@@ -6,7 +6,6 @@ android/
 ios/
 *.log
 .DS_Store
-
-export
 ../backend
-../export
+../fix_ke_api.py
+../create_ke_config.py
