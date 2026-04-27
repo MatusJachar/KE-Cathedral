@@ -1,4 +1,4 @@
-// Clean, elegant white theme with gold accents for Spiš Castle Audio Guide
+﻿// Clean, elegant white theme with gold accents for St. Elizabeth Cathedral Audio Guide
 export const Colors = {
   // Light theme backgrounds
   background: '#FDFBF7',
