@@ -1,4 +1,4 @@
-"""
+﻿"""
 ULTIMATE SPIŠSKÝ HRAD AUDIO GUIDE - BACKEND API
 Features:
 - 12 Tour Stops + 4 Legends in 9 Languages
@@ -13,7 +13,7 @@ Features:
 from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File, Form, Depends, status, Request, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, StreamingResponse, Response
+from fastapi.responses import FileResponse, StreamingResponse, Response, JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -55,7 +55,13 @@ JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 168  # 7 days for mobile convenience
 
 # Create the main app
-app = FastAPI(title="Spišský Hrad Ultimate Audio Guide API", version="2.0.0")
+
+import json
+
+class UTF8JSONResponse(JSONResponse):
+    def render(self, content) -> bytes:
+        return json.dumps(content, ensure_ascii=False, allow_nan=False, indent=None, separators=(",", ":")).encode("utf-8")
+app = FastAPI(default_response_class=UTF8JSONResponse, title="Spišský Hrad Ultimate Audio Guide API", version="2.0.0")
 api_router = APIRouter(prefix="/api")
 security = HTTPBearer()
 
@@ -1850,4 +1856,5 @@ logger = logging.getLogger(__name__)
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
 
