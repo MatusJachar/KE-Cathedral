@@ -1,11 +1,6 @@
-node_modules/
-.git/
-.expo/
-.metro-cache/
-android/
-ios/
+﻿node_modules
+.git
 *.log
-.DS_Store
-../backend
-../fix_ke_api.py
-../create_ke_config.py
+.expo
+android
+ios
