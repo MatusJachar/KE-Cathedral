@@ -1,4 +1,197 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from 'react';
+import {
+  View, Text, StyleSheet, ScrollView, Pressable,
+  Image, Dimensions, ActivityIndicator, SafeAreaView,
+  StatusBar, Platform,
+} from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const { width, height } = Dimensions.get('window');
+const API_BASE = 'http://l4lcga17cpq7qo6hkc0srgzg.178.104.72.151.sslip.io';
+const CATHEDRAL_IMAGE = API_BASE + '/api/uploads/images/ee7d4914-1a92-4d41-9395-055b24511c6a.jpg';
+
+const TOUR_DEFS = {
+  complete: {
+    label: { sk: 'Kompletná prehliadka', en: 'Complete Tour', de: 'Vollständige Tour', hu: 'Teljes körút', pl: 'Pełna wycieczka', fr: 'Visite complète', it: 'Tour completo', es: 'Visita completa', uk: 'Повний тур' },
+    stops: ['1','2','3','4','5','6','7','8','9','10','11','12','13','14'],
+    duration: 90,
+  },
+  spiritual: {
+    label: { sk: 'Duchovná prehliadka', en: 'Spiritual Tour', de: 'Spirituelle Tour', hu: 'Lelki körút', pl: 'Wycieczka duchowa', fr: 'Visite spirituelle', it: 'Tour spirituale', es: 'Visita espiritual', uk: 'Духовний тур' },
+    stops: ['1','2','3','7','8','11','13','14'],
+    duration: 45,
+  },
+};
+
+const LABELS = {
+  back: { sk: 'Späť', en: 'Back', de: 'Zurück', hu: 'Vissza', pl: 'Wróć', fr: 'Retour', it: 'Indietro', es: 'Volver', uk: 'Назад' },
+  stops: { sk: 'zastávok', en: 'stops', de: 'Stationen', hu: 'megálló', pl: 'przystanek', fr: 'arrêts', it: 'fermate', es: 'paradas', uk: 'зупинок' },
+  minutes: { sk: 'min', en: 'min', de: 'Min.', hu: 'perc', pl: 'min', fr: 'min', it: 'min', es: 'min', uk: 'хв' },
+  startTour: { sk: 'Začať prehliadku', en: 'Start Tour', de: 'Tour starten', hu: 'Körút indítása', pl: 'Rozpocznij', fr: 'Commencer', it: 'Inizia', es: 'Iniciar', uk: 'Почати' },
+  stopList: { sk: 'Zastávky prehliadky', en: 'Tour Stops', de: 'Stationen', hu: 'Megállók', pl: 'Przystanki', fr: 'Arrêts', it: 'Fermate', es: 'Paradas', uk: 'Зупинки' },
+};
+
+function t(key, lang) {
+  return LABELS[key]?.[lang] ?? LABELS[key]?.['en'] ?? key;
+}
+
+export default function TourDetailScreen() {
+  const { id } = useLocalSearchParams();
+  const router = useRouter();
+  const [lang, setLang] = useState('sk');
+  const [stops, setStops] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const tourDef = TOUR_DEFS[id] ?? TOUR_DEFS['complete'];
+
+  useEffect(() => {
+    AsyncStorage.getItem('selectedLanguage').then(v => { if (v) setLang(v); });
+  }, []);
+
+  useEffect(() => { fetchStops(); }, []);
+
+  async function fetchStops() {
+    try {
+      setLoading(true);
+      const res = await fetch(API_BASE + '/api/stops');
+      const data = await res.json();
+      const filtered = tourDef.stops
+        .map(num => data.find(s => String(s.order) === num))
+        .filter(Boolean);
+      setStops(filtered);
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  }
+
+  function handleStart() {
+    if (!stops.length) return;
+    router.push({
+      pathname: '/tour/stop',
+      params: { stopId: stops[0]._id, tourId: id, stopIndex: '0', tourStops: JSON.stringify(stops.map(s => s._id)) },
+    });
+  }
+
+  const tourLabel = tourDef.label[lang] ?? tourDef.label['en'];
+
+  return (
+    <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FDFBF7" />
+      <View style={styles.header}>
+        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={24} color="#2D241E" />
+          <Text style={styles.backText}>{t('back', lang)}</Text>
+        </Pressable>
+      </View>
+
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        <View style={styles.heroContainer}>
+          <Image source={{ uri: CATHEDRAL_IMAGE }} style={styles.heroImage} resizeMode="cover" />
+          <View style={styles.heroOverlay} />
+          <View style={styles.heroContent}>
+            <Text style={styles.heroTitle}>{tourLabel}</Text>
+            <View style={styles.heroBadges}>
+              <View style={styles.badge}>
+                <Ionicons name="location" size={14} color="#D4AF37" />
+                <Text style={styles.badgeText}>{tourDef.stops.length} {t('stops', lang)}</Text>
+              </View>
+              <View style={styles.badge}>
+                <Ionicons name="time" size={14} color="#D4AF37" />
+                <Text style={styles.badgeText}>{tourDef.duration} {t('minutes', lang)}</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('stopList', lang)}</Text>
+          {loading ? (
+            <ActivityIndicator color="#D4AF37" style={{ marginTop: 20 }} />
+          ) : (
+            stops.map((stop, index) => {
+              const title = stop.translations?.[lang]?.title ?? stop.translations?.['en']?.title ?? ('Stop ' + stop.order);
+              const imgUri = stop.imageUrl
+                ? (stop.imageUrl.startsWith('http') ? stop.imageUrl : API_BASE + stop.imageUrl)
+                : null;
+              return (
+                <Pressable
+                  key={stop._id}
+                  style={({ pressed }) => [styles.stopRow, pressed && styles.stopRowPressed]}
+                  onPress={() => router.push({
+                    pathname: '/tour/stop',
+                    params: { stopId: stop._id, tourId: id, stopIndex: String(index), tourStops: JSON.stringify(stops.map(s => s._id)) },
+                  })}
+                >
+                  {imgUri ? (
+                    <Image source={{ uri: imgUri }} style={styles.thumbnail} resizeMode="cover" />
+                  ) : (
+                    <View style={styles.thumbnailPlaceholder}>
+                      <Ionicons name="business" size={22} color="#D4AF37" />
+                    </View>
+                  )}
+                  <View style={styles.stopInfo}>
+                    <View style={styles.stopNumberBadge}>
+                      <Text style={styles.stopNumberText}>{index + 1}</Text>
+                    </View>
+                    <Text style={styles.stopTitle} numberOfLines={2}>{title}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color="#C4B99A" />
+                </Pressable>
+              );
+            })
+          )}
+        </View>
+        <View style={{ height: 120 }} />
+      </ScrollView>
+
+      <View style={styles.startContainer}>
+        <Pressable
+          style={[styles.startBtn, (loading || !stops.length) && styles.startBtnDisabled]}
+          onPress={handleStart}
+          disabled={loading || !stops.length}
+        >
+          {loading ? <ActivityIndicator color="#FDFBF7" /> : (
+            <>
+              <Ionicons name="play-circle" size={22} color="#FDFBF7" />
+              <Text style={styles.startBtnText}>{t('startTour', lang)}</Text>
+            </>
+          )}
+        </Pressable>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#FDFBF7' },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10 },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  backText: { fontSize: 16, color: '#2D241E' },
+  scroll: { flex: 1 },
+  heroContainer: { width: '100%', height: height * 0.32, position: 'relative' },
+  heroImage: { width: '100%', height: '100%' },
+  heroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(45,36,30,0.5)' },
+  heroContent: { position: 'absolute', bottom: 20, left: 20, right: 20 },
+  heroTitle: { fontSize: 26, fontWeight: '800', color: '#FDFBF7', marginBottom: 10, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
+  heroBadges: { flexDirection: 'row', gap: 10 },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(45,36,30,0.6)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
+  badgeText: { color: '#FDFBF7', fontSize: 13 },
+  section: { paddingHorizontal: 16, paddingTop: 24 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#2D241E', marginBottom: 16 },
+  stopRow: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#fff', borderRadius: 14, marginBottom: 10, padding: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
+  stopRowPressed: { opacity: 0.85 },
+  thumbnail: { width: 72, height: 72, borderRadius: 10 },
+  thumbnailPlaceholder: { width: 72, height: 72, borderRadius: 10, backgroundColor: '#EDE8DF', justifyContent: 'center', alignItems: 'center' },
+  stopInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  stopNumberBadge: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#D4AF37', justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
+  stopNumberText: { color: '#2D241E', fontWeight: '800', fontSize: 12 },
+  stopTitle: { flex: 1, fontSize: 15, color: '#2D241E', fontWeight: '600', lineHeight: 21 },
+  startContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FDFBF7', paddingHorizontal: 20, paddingBottom: Platform.OS === 'ios' ? 30 : 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#EDE8DF' },
+  startBtn: { backgroundColor: '#2D241E', borderRadius: 14, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  startBtnDisabled: { opacity: 0.5 },
+  startBtnText: { color: '#FDFBF7', fontSize: 17, fontWeight: '800', letterSpacing: 0.5 },
+});import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
