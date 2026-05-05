@@ -1,3 +1,49 @@
+# EAS Build ignore file
+# Each pattern on its own line
+
+# Dependencies - BIGGEST savings
+node_modules/
+
+# Git
+.git/
+.gitignore
+
+# Expo cache
+.expo/
+.expo-shared/
+
+# Build outputs
+android/
+ios/
+dist/
+build/
+web-build/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backend (not needed for mobile build)
+../backend/
+
+# Test files
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+
+# Docs
+*.md
+docs/
+
+# Large assets not needed
+assets/videos/
 ﻿node_modules
 .git
 *.log
