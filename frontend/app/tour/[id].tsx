@@ -1,198 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable,
-  Image, Dimensions, ActivityIndicator, SafeAreaView,
-  StatusBar, Platform,
-} from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const { width, height } = Dimensions.get('window');
-const API_BASE = 'http://l4lcga17cpq7qo6hkc0srgzg.178.104.72.151.sslip.io';
-const CATHEDRAL_IMAGE = API_BASE + '/api/uploads/images/ee7d4914-1a92-4d41-9395-055b24511c6a.jpg';
-
-const TOUR_DEFS = {
-  complete: {
-    label: { sk: 'Kompletná prehliadka', en: 'Complete Tour', de: 'Vollständige Tour', hu: 'Teljes körút', pl: 'Pełna wycieczka', fr: 'Visite complète', it: 'Tour completo', es: 'Visita completa', uk: 'Повний тур' },
-    stops: ['1','2','3','4','5','6','7','8','9','10','11','12','13','14'],
-    duration: 90,
-  },
-  spiritual: {
-    label: { sk: 'Duchovná prehliadka', en: 'Spiritual Tour', de: 'Spirituelle Tour', hu: 'Lelki körút', pl: 'Wycieczka duchowa', fr: 'Visite spirituelle', it: 'Tour spirituale', es: 'Visita espiritual', uk: 'Духовний тур' },
-    stops: ['1','2','3','7','8','11','13','14'],
-    duration: 45,
-  },
-};
-
-const LABELS = {
-  back: { sk: 'Späť', en: 'Back', de: 'Zurück', hu: 'Vissza', pl: 'Wróć', fr: 'Retour', it: 'Indietro', es: 'Volver', uk: 'Назад' },
-  stops: { sk: 'zastávok', en: 'stops', de: 'Stationen', hu: 'megálló', pl: 'przystanek', fr: 'arrêts', it: 'fermate', es: 'paradas', uk: 'зупинок' },
-  minutes: { sk: 'min', en: 'min', de: 'Min.', hu: 'perc', pl: 'min', fr: 'min', it: 'min', es: 'min', uk: 'хв' },
-  startTour: { sk: 'Začať prehliadku', en: 'Start Tour', de: 'Tour starten', hu: 'Körút indítása', pl: 'Rozpocznij', fr: 'Commencer', it: 'Inizia', es: 'Iniciar', uk: 'Почати' },
-  stopList: { sk: 'Zastávky prehliadky', en: 'Tour Stops', de: 'Stationen', hu: 'Megállók', pl: 'Przystanki', fr: 'Arrêts', it: 'Fermate', es: 'Paradas', uk: 'Зупинки' },
-};
-
-function t(key, lang) {
-  return LABELS[key]?.[lang] ?? LABELS[key]?.['en'] ?? key;
-}
-
-export default function TourDetailScreen() {
-  const { id } = useLocalSearchParams();
-  const router = useRouter();
-  const [lang, setLang] = useState('sk');
-  const [stops, setStops] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const tourDef = TOUR_DEFS[id] ?? TOUR_DEFS['complete'];
-
-  useEffect(() => {
-    AsyncStorage.getItem('selectedLanguage').then(v => { if (v) setLang(v); });
-  }, []);
-
-  useEffect(() => { fetchStops(); }, []);
-
-  async function fetchStops() {
-    try {
-      setLoading(true);
-      const res = await fetch(API_BASE + '/api/stops');
-      const data = await res.json();
-      const filtered = tourDef.stops
-        .map(num => data.find(s => String(s.order) === num))
-        .filter(Boolean);
-      setStops(filtered);
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  }
-
-  function handleStart() {
-    if (!stops.length) return;
-    router.push({
-      pathname: '/tour/stop',
-      params: { stopId: stops[0]._id, tourId: id, stopIndex: '0', tourStops: JSON.stringify(stops.map(s => s._id)) },
-    });
-  }
-
-  const tourLabel = tourDef.label[lang] ?? tourDef.label['en'];
-
-  return (
-    <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FDFBF7" />
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color="#2D241E" />
-          <Text style={styles.backText}>{t('back', lang)}</Text>
-        </Pressable>
-      </View>
-
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.heroContainer}>
-          <Image source={{ uri: CATHEDRAL_IMAGE }} style={styles.heroImage} resizeMode="cover" />
-          <View style={styles.heroOverlay} />
-          <View style={styles.heroContent}>
-            <Text style={styles.heroTitle}>{tourLabel}</Text>
-            <View style={styles.heroBadges}>
-              <View style={styles.badge}>
-                <Ionicons name="location" size={14} color="#D4AF37" />
-                <Text style={styles.badgeText}>{tourDef.stops.length} {t('stops', lang)}</Text>
-              </View>
-              <View style={styles.badge}>
-                <Ionicons name="time" size={14} color="#D4AF37" />
-                <Text style={styles.badgeText}>{tourDef.duration} {t('minutes', lang)}</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('stopList', lang)}</Text>
-          {loading ? (
-            <ActivityIndicator color="#D4AF37" style={{ marginTop: 20 }} />
-          ) : (
-            stops.map((stop, index) => {
-              const title = stop.translations?.[lang]?.title ?? stop.translations?.['en']?.title ?? ('Stop ' + stop.order);
-              const imgUri = stop.imageUrl
-                ? (stop.imageUrl.startsWith('http') ? stop.imageUrl : API_BASE + stop.imageUrl)
-                : null;
-              return (
-                <Pressable
-                  key={stop._id}
-                  style={({ pressed }) => [styles.stopRow, pressed && styles.stopRowPressed]}
-                  onPress={() => router.push({
-                    pathname: '/tour/stop',
-                    params: { stopId: stop._id, tourId: id, stopIndex: String(index), tourStops: JSON.stringify(stops.map(s => s._id)) },
-                  })}
-                >
-                  {imgUri ? (
-                    <Image source={{ uri: imgUri }} style={styles.thumbnail} resizeMode="cover" />
-                  ) : (
-                    <View style={styles.thumbnailPlaceholder}>
-                      <Ionicons name="business" size={22} color="#D4AF37" />
-                    </View>
-                  )}
-                  <View style={styles.stopInfo}>
-                    <View style={styles.stopNumberBadge}>
-                      <Text style={styles.stopNumberText}>{index + 1}</Text>
-                    </View>
-                    <Text style={styles.stopTitle} numberOfLines={2}>{title}</Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color="#C4B99A" />
-                </Pressable>
-              );
-            })
-          )}
-        </View>
-        <View style={{ height: 120 }} />
-      </ScrollView>
-
-      <View style={styles.startContainer}>
-        <Pressable
-          style={[styles.startBtn, (loading || !stops.length) && styles.startBtnDisabled]}
-          onPress={handleStart}
-          disabled={loading || !stops.length}
-        >
-          {loading ? <ActivityIndicator color="#FDFBF7" /> : (
-            <>
-              <Ionicons name="play-circle" size={22} color="#FDFBF7" />
-              <Text style={styles.startBtnText}>{t('startTour', lang)}</Text>
-            </>
-          )}
-        </Pressable>
-      </View>
-    </SafeAreaView>
-  );
-}
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FDFBF7' },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10 },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  backText: { fontSize: 16, color: '#2D241E' },
-  scroll: { flex: 1 },
-  heroContainer: { width: '100%', height: height * 0.32, position: 'relative' },
-  heroImage: { width: '100%', height: '100%' },
-  heroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(45,36,30,0.5)' },
-  heroContent: { position: 'absolute', bottom: 20, left: 20, right: 20 },
-  heroTitle: { fontSize: 26, fontWeight: '800', color: '#FDFBF7', marginBottom: 10, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
-  heroBadges: { flexDirection: 'row', gap: 10 },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(45,36,30,0.6)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
-  badgeText: { color: '#FDFBF7', fontSize: 13 },
-  section: { paddingHorizontal: 16, paddingTop: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#2D241E', marginBottom: 16 },
-  stopRow: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#fff', borderRadius: 14, marginBottom: 10, padding: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
-  stopRowPressed: { opacity: 0.85 },
-  thumbnail: { width: 72, height: 72, borderRadius: 10 },
-  thumbnailPlaceholder: { width: 72, height: 72, borderRadius: 10, backgroundColor: '#EDE8DF', justifyContent: 'center', alignItems: 'center' },
-  stopInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  stopNumberBadge: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#D4AF37', justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
-  stopNumberText: { color: '#2D241E', fontWeight: '800', fontSize: 12 },
-  stopTitle: { flex: 1, fontSize: 15, color: '#2D241E', fontWeight: '600', lineHeight: 21 },
-  startContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FDFBF7', paddingHorizontal: 20, paddingBottom: Platform.OS === 'ios' ? 30 : 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#EDE8DF' },
-  startBtn: { backgroundColor: '#2D241E', borderRadius: 14, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  startBtnDisabled: { opacity: 0.5 },
-  startBtnText: { color: '#FDFBF7', fontSize: 17, fontWeight: '800', letterSpacing: 0.5 },
-});import React, { useState, useEffect, useRef } from "react";
-import {
   View,
   Text,
   StyleSheet,
@@ -220,29 +27,29 @@ const CATHEDRAL_IMAGE =
 const TOUR_DEFS: Record<string, { label: Record<string, string>; stops: string[] }> = {
   complete: {
     label: {
-      sk: "Kompletná prehliadka",
+      sk: "KompletnĂˇ prehliadka",
       en: "Complete Tour",
-      de: "Vollständige Tour",
-      hu: "Teljes körút",
-      pl: "Pełna wycieczka",
-      fr: "Visite complète",
+      de: "VollstĂ¤ndige Tour",
+      hu: "Teljes kĂ¶rĂşt",
+      pl: "PeĹ‚na wycieczka",
+      fr: "Visite complĂ¨te",
       it: "Tour completo",
       es: "Visita completa",
-      uk: "Повний тур",
+      uk: "ĐźĐľĐ˛Đ˝Đ¸Đą Ń‚ŃŃ€",
     },
     stops: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"],
   },
   spiritual: {
     label: {
-      sk: "Duchovná prehliadka",
+      sk: "DuchovnĂˇ prehliadka",
       en: "Spiritual Tour",
       de: "Spirituelle Tour",
-      hu: "Lelki körút",
+      hu: "Lelki kĂ¶rĂşt",
       pl: "Wycieczka duchowa",
       fr: "Visite spirituelle",
       it: "Tour spirituale",
       es: "Visita espiritual",
-      uk: "Духовний тур",
+      uk: "Đ”ŃŃ…ĐľĐ˛Đ˝Đ¸Đą Ń‚ŃŃ€",
     },
     stops: ["1", "2", "3", "7", "8", "11", "13", "14"],
   },
@@ -251,17 +58,17 @@ const TOUR_DEFS: Record<string, { label: Record<string, string>; stops: string[]
 const HIGHLIGHTS: Record<string, Record<string, string[]>> = {
   sk: {
     complete: [
-      "Hlavný oltár sv. Alžbety",
-      "Severná veža s vyhliadkou",
-      "Kaplnka Zápoľských",
-      "Oltár Navštívenia Panny Márie",
-      "Gotické vitráže",
-      "Krstiteľnica z 15. storočia",
+      "HlavnĂ˝ oltĂˇr sv. AlĹľbety",
+      "SevernĂˇ veĹľa s vyhliadkou",
+      "Kaplnka ZĂˇpoÄľskĂ˝ch",
+      "OltĂˇr NavĹˇtĂ­venia Panny MĂˇrie",
+      "GotickĂ© vitrĂˇĹľe",
+      "KrstiteÄľnica z 15. storoÄŤia",
     ],
     spiritual: [
-      "Modlitebné miesta",
-      "Sv. omšové oltáre",
-      "Mariánska kaplnka",
+      "ModlitebnĂ© miesta",
+      "Sv. omĹˇovĂ© oltĂˇre",
+      "MariĂˇnska kaplnka",
       "Sakristia",
     ],
   },
@@ -269,7 +76,7 @@ const HIGHLIGHTS: Record<string, Record<string, string[]>> = {
     complete: [
       "Main altar of St. Elizabeth",
       "North tower with viewpoint",
-      "Zápolya Chapel",
+      "ZĂˇpolya Chapel",
       "Altar of the Visitation of the Virgin Mary",
       "Gothic stained glass windows",
       "15th century baptismal font",
@@ -285,61 +92,61 @@ const HIGHLIGHTS: Record<string, Record<string, string[]>> = {
     complete: [
       "Hauptaltar der hl. Elisabeth",
       "Nordturm mit Aussichtspunkt",
-      "Zápolya-Kapelle",
+      "ZĂˇpolya-Kapelle",
       "Altar der Heimsuchung Mariens",
       "Gotische Buntglasfenster",
       "Taufbecken aus dem 15. Jahrhundert",
     ],
     spiritual: [
       "Gebetsorte",
-      "Messaltäre",
+      "MessaltĂ¤re",
       "Marienkapelle",
       "Sakristei",
     ],
   },
   hu: {
     complete: [
-      "Szt. Erzsébet főoltár",
-      "Északi torony kilátóval",
-      "Zápolya-kápolna",
-      "Szűz Mária látogatásának oltára",
-      "Gótikus üvegablakok",
-      "15. századi keresztelőmedence",
+      "Szt. ErzsĂ©bet fĹ‘oltĂˇr",
+      "Ă‰szaki torony kilĂˇtĂłval",
+      "ZĂˇpolya-kĂˇpolna",
+      "SzĹ±z MĂˇria lĂˇtogatĂˇsĂˇnak oltĂˇra",
+      "GĂłtikus ĂĽvegablakok",
+      "15. szĂˇzadi keresztelĹ‘medence",
     ],
     spiritual: [
-      "Imádkozó helyek",
-      "Misék oltárai",
-      "Mária-kápolna",
+      "ImĂˇdkozĂł helyek",
+      "MisĂ©k oltĂˇrai",
+      "MĂˇria-kĂˇpolna",
       "Sekrestye",
     ],
   },
   pl: {
     complete: [
-      "Główny ołtarz św. Elżbiety",
-      "Wieża północna z punktem widokowym",
-      "Kaplica Zápolya",
-      "Ołtarz Nawiedzenia NMP",
-      "Gotyckie witraże",
+      "GĹ‚Ăłwny oĹ‚tarz Ĺ›w. ElĹĽbiety",
+      "WieĹĽa pĂłĹ‚nocna z punktem widokowym",
+      "Kaplica ZĂˇpolya",
+      "OĹ‚tarz Nawiedzenia NMP",
+      "Gotyckie witraĹĽe",
       "Chrzcielnica z XV wieku",
     ],
     spiritual: [
       "Miejsca modlitwy",
-      "Ołtarze mszalne",
+      "OĹ‚tarze mszalne",
       "Kaplica Maryi",
       "Zakrystia",
     ],
   },
   fr: {
     complete: [
-      "Autel principal de Ste Élisabeth",
-      "Tour nord avec belvédère",
-      "Chapelle Zápolya",
+      "Autel principal de Ste Ă‰lisabeth",
+      "Tour nord avec belvĂ©dĂ¨re",
+      "Chapelle ZĂˇpolya",
       "Autel de la Visitation de la Vierge",
       "Vitraux gothiques",
-      "Fonts baptismaux du XVe siècle",
+      "Fonts baptismaux du XVe siĂ¨cle",
     ],
     spiritual: [
-      "Espaces de prière",
+      "Espaces de priĂ¨re",
       "Autels de messe",
       "Chapelle mariale",
       "Sacristie",
@@ -349,7 +156,7 @@ const HIGHLIGHTS: Record<string, Record<string, string[]>> = {
     complete: [
       "Altare principale di S. Elisabetta",
       "Torre nord con belvedere",
-      "Cappella Zápolya",
+      "Cappella ZĂˇpolya",
       "Altare della Visitazione della Vergine",
       "Vetrate gotiche",
       "Fonte battesimale del XV secolo",
@@ -365,70 +172,70 @@ const HIGHLIGHTS: Record<string, Record<string, string[]>> = {
     complete: [
       "Altar mayor de Santa Isabel",
       "Torre norte con mirador",
-      "Capilla Zápolya",
-      "Altar de la Visitación de la Virgen",
-      "Vidrieras góticas",
+      "Capilla ZĂˇpolya",
+      "Altar de la VisitaciĂłn de la Virgen",
+      "Vidrieras gĂłticas",
       "Pila bautismal del siglo XV",
     ],
     spiritual: [
-      "Lugares de oración",
+      "Lugares de oraciĂłn",
       "Altares de misa",
       "Capilla mariana",
-      "Sacristía",
+      "SacristĂ­a",
     ],
   },
   uk: {
     complete: [
-      "Головний вівтар св. Єлизавети",
-      "Північна вежа з оглядовим майданчиком",
-      "Капела Заполья",
-      "Вівтар Відвідин Діви Марії",
-      "Готичні вітражі",
-      "Купіль XV століття",
+      "Đ“ĐľĐ»ĐľĐ˛Đ˝Đ¸Đą Đ˛Ń–Đ˛Ń‚Đ°Ń€ ŃĐ˛. Đ„Đ»Đ¸Đ·Đ°Đ˛ĐµŃ‚Đ¸",
+      "ĐźŃ–Đ˛Đ˝Ń–Ń‡Đ˝Đ° Đ˛ĐµĐ¶Đ° Đ· ĐľĐłĐ»ŃŹĐ´ĐľĐ˛Đ¸ĐĽ ĐĽĐ°ĐąĐ´Đ°Đ˝Ń‡Đ¸ĐşĐľĐĽ",
+      "ĐšĐ°ĐżĐµĐ»Đ° Đ—Đ°ĐżĐľĐ»ŃŚŃŹ",
+      "Đ’Ń–Đ˛Ń‚Đ°Ń€ Đ’Ń–Đ´Đ˛Ń–Đ´Đ¸Đ˝ Đ”Ń–Đ˛Đ¸ ĐśĐ°Ń€Ń–Ń—",
+      "Đ“ĐľŃ‚Đ¸Ń‡Đ˝Ń– Đ˛Ń–Ń‚Ń€Đ°Đ¶Ń–",
+      "ĐšŃĐżŃ–Đ»ŃŚ XV ŃŃ‚ĐľĐ»Ń–Ń‚Ń‚ŃŹ",
     ],
     spiritual: [
-      "Місця молитви",
-      "Вівтарі меси",
-      "Маріанська капела",
-      "Ризниця",
+      "ĐśŃ–ŃŃ†ŃŹ ĐĽĐľĐ»Đ¸Ń‚Đ˛Đ¸",
+      "Đ’Ń–Đ˛Ń‚Đ°Ń€Ń– ĐĽĐµŃĐ¸",
+      "ĐśĐ°Ń€Ń–Đ°Đ˝ŃŃŚĐşĐ° ĐşĐ°ĐżĐµĐ»Đ°",
+      "Đ Đ¸Đ·Đ˝Đ¸Ń†ŃŹ",
     ],
   },
 };
 
 const LABELS: Record<string, Record<string, string>> = {
   back: {
-    sk: "Späť", en: "Back", de: "Zurück", hu: "Vissza",
-    pl: "Wróć", fr: "Retour", it: "Indietro", es: "Volver", uk: "Назад",
+    sk: "SpĂ¤ĹĄ", en: "Back", de: "ZurĂĽck", hu: "Vissza",
+    pl: "WrĂłÄ‡", fr: "Retour", it: "Indietro", es: "Volver", uk: "ĐťĐ°Đ·Đ°Đ´",
   },
   stops: {
-    sk: "zastávok", en: "stops", de: "Stationen", hu: "megálló",
-    pl: "przystanków", fr: "arrêts", it: "fermate", es: "paradas", uk: "зупинок",
+    sk: "zastĂˇvok", en: "stops", de: "Stationen", hu: "megĂˇllĂł",
+    pl: "przystankĂłw", fr: "arrĂŞts", it: "fermate", es: "paradas", uk: "Đ·ŃĐżĐ¸Đ˝ĐľĐş",
   },
   highlights: {
-    sk: "Najdôležitejšie miesta", en: "Highlights", de: "Höhepunkte",
-    hu: "Főbb látványosságok", pl: "Najważniejsze miejsca", fr: "Points forts",
-    it: "Punti salienti", es: "Aspectos destacados", uk: "Головні місця",
+    sk: "NajdĂ´leĹľitejĹˇie miesta", en: "Highlights", de: "HĂ¶hepunkte",
+    hu: "FĹ‘bb lĂˇtvĂˇnyossĂˇgok", pl: "NajwaĹĽniejsze miejsca", fr: "Points forts",
+    it: "Punti salienti", es: "Aspectos destacados", uk: "Đ“ĐľĐ»ĐľĐ˛Đ˝Ń– ĐĽŃ–ŃŃ†ŃŹ",
   },
   startTour: {
-    sk: "Začať prehliadku", en: "Start Tour", de: "Tour starten",
-    hu: "Körút indítása", pl: "Rozpocznij wycieczkę", fr: "Commencer la visite",
-    it: "Inizia il tour", es: "Iniciar visita", uk: "Почати тур",
+    sk: "ZaÄŤaĹĄ prehliadku", en: "Start Tour", de: "Tour starten",
+    hu: "KĂ¶rĂşt indĂ­tĂˇsa", pl: "Rozpocznij wycieczkÄ™", fr: "Commencer la visite",
+    it: "Inizia il tour", es: "Iniciar visita", uk: "ĐźĐľŃ‡Đ°Ń‚Đ¸ Ń‚ŃŃ€",
   },
   duration: {
-    sk: "Trvanie", en: "Duration", de: "Dauer", hu: "Időtartam",
-    pl: "Czas trwania", fr: "Durée", it: "Durata", es: "Duración", uk: "Тривалість",
+    sk: "Trvanie", en: "Duration", de: "Dauer", hu: "IdĹ‘tartam",
+    pl: "Czas trwania", fr: "DurĂ©e", it: "Durata", es: "DuraciĂłn", uk: "Đ˘Ń€Đ¸Đ˛Đ°Đ»Ń–ŃŃ‚ŃŚ",
   },
   min: {
     sk: "min", en: "min", de: "Min.", hu: "perc",
-    pl: "min", fr: "min", it: "min", es: "min", uk: "хв",
+    pl: "min", fr: "min", it: "min", es: "min", uk: "Ń…Đ˛",
   },
   loading: {
-    sk: "Načítava sa...", en: "Loading...", de: "Wird geladen...", hu: "Betöltés...",
-    pl: "Ładowanie...", fr: "Chargement...", it: "Caricamento...", es: "Cargando...", uk: "Завантаження...",
+    sk: "NaÄŤĂ­tava sa...", en: "Loading...", de: "Wird geladen...", hu: "BetĂ¶ltĂ©s...",
+    pl: "Ĺadowanie...", fr: "Chargement...", it: "Caricamento...", es: "Cargando...", uk: "Đ—Đ°Đ˛Đ°Đ˝Ń‚Đ°Đ¶ĐµĐ˝Đ˝ŃŹ...",
   },
   stopList: {
-    sk: "Zoznam zastávok", en: "Stop List", de: "Haltestellen", hu: "Megállók listája",
-    pl: "Lista przystanków", fr: "Liste des arrêts", it: "Elenco fermate", es: "Lista de paradas", uk: "Список зупинок",
+    sk: "Zoznam zastĂˇvok", en: "Stop List", de: "Haltestellen", hu: "MegĂˇllĂłk listĂˇja",
+    pl: "Lista przystankĂłw", fr: "Liste des arrĂŞts", it: "Elenco fermate", es: "Lista de paradas", uk: "ĐˇĐżĐ¸ŃĐľĐş Đ·ŃĐżĐ¸Đ˝ĐľĐş",
   },
 };
 
