@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Image, Dimensions, ActivityIndicator, ScrollView, Platform, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,21 +33,14 @@ export default function HomeScreen() {
 
   return (
     <ScrollView style={styles.container} bounces={false} showsVerticalScrollIndicator={false}>
-      {/* HERO */}
       <View style={[styles.heroSection, { paddingTop: insets.top + 20 }]}>
         <Image source={{ uri: HERO_IMAGE }} style={styles.heroBackground} resizeMode="cover" blurRadius={Platform.OS === 'web' ? 0 : 2} />
         <View style={styles.heroOverlay} />
         <View style={styles.heroContent}>
-          <View style={styles.logoContainer}>
-            <Ionicons name="business" size={48} color="#D4AF37" />
-          </View>
           <Text style={styles.heroTitle}>Dóm sv. Alžbety</Text>
           <Text style={styles.heroSubtitle}>Audio sprievodca</Text>
           <Text style={styles.heroDesc}>Objavte históriu najväčšej gotickej katedrály na Slovensku.</Text>
-          <Pressable
-            style={({ pressed }) => [styles.startButton, pressed && styles.startButtonPressed]}
-            onPress={() => router.push('/language')}
-          >
+          <Pressable style={({ pressed }) => [styles.startButton, pressed && styles.startButtonPressed]} onPress={() => router.push('/language')}>
             <Text style={styles.startButtonText}>Začať prehliadku</Text>
             <Ionicons name="arrow-forward" size={22} color="#2D241E" />
           </Pressable>
@@ -70,14 +63,13 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* MENU */}
       <View style={styles.menuSection}>
         <View style={styles.iconRow}>
-          <Pressable style={styles.iconItem} onPress={() => router.push('/features/info')}>
+          <Pressable style={styles.iconItem} onPress={() => router.push('/admin')}>
             <View style={[styles.iconCircle, { backgroundColor: '#4CAF50' }]}>
-              <Ionicons name="information-circle" size={26} color="#fff" />
+              <Ionicons name="settings" size={26} color="#fff" />
             </View>
-            <Text style={styles.iconLabel}>Info</Text>
+            <Text style={styles.iconLabel}>Admin</Text>
           </Pressable>
           <Pressable style={styles.iconItem} onPress={() => router.push('/features/nearby')}>
             <View style={[styles.iconCircle, { backgroundColor: '#2196F3' }]}>
@@ -106,7 +98,6 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* MAP */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Ionicons name="map" size={20} color="#D4AF37" />
@@ -121,7 +112,6 @@ export default function HomeScreen() {
         </Pressable>
       </View>
 
-      {/* OPENING HOURS */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Ionicons name="time" size={20} color="#D4AF37" />
@@ -148,7 +138,6 @@ export default function HomeScreen() {
 
       <View style={{ height: insets.bottom + 32 }} />
 
-      {/* MAP MODAL */}
       <Modal visible={showMapModal} transparent animationType="fade">
         <View style={styles.mapModalOverlay}>
           <View style={[styles.mapModalToolbar, { top: insets.top + 12 }]}>
@@ -170,12 +159,11 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  heroSection: { minHeight: height * 0.75, position: 'relative', justifyContent: 'center', alignItems: 'center' },
+  heroSection: { minHeight: height * 0.72, position: 'relative', justifyContent: 'center', alignItems: 'center' },
   heroBackground: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
   heroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(45,36,30,0.55)' },
   heroContent: { alignItems: 'center', paddingHorizontal: 28, zIndex: 1 },
-  logoContainer: { width: 80, height: 80, borderRadius: 20, backgroundColor: 'rgba(212,175,55,0.15)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
-  heroTitle: { fontSize: 36, fontWeight: '800', color: '#fff', textAlign: 'center', fontFamily: 'serif' },
+  heroTitle: { fontSize: 28, fontWeight: '800', color: '#fff', textAlign: 'center', fontFamily: 'serif' },
   heroSubtitle: { fontSize: 16, color: '#D4AF37', fontWeight: '600', letterSpacing: 2, marginTop: 4 },
   heroDesc: { fontSize: 14, color: 'rgba(255,255,255,0.8)', textAlign: 'center', lineHeight: 21, marginTop: 16 },
   startButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#D4AF37', paddingVertical: 14, paddingHorizontal: 40, borderRadius: 30, marginTop: 24, gap: 10 },
