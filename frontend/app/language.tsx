@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Image, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,15 +21,15 @@ const FLAG_IMAGES: Record<string, string> = {
 };
 
 const FALLBACK_LANGUAGES = [
-  { code: 'sk', name: 'Slovak',    native_name: 'SlovenÄ‚â€žÄąÂ¤ina' },
+  { code: 'sk', name: 'Slovak',    native_name: 'Slovenčina' },
   { code: 'en', name: 'English',   native_name: 'English' },
   { code: 'de', name: 'German',    native_name: 'Deutsch' },
   { code: 'pl', name: 'Polish',    native_name: 'Polski' },
   { code: 'hu', name: 'Hungarian', native_name: 'Magyar' },
-  { code: 'fr', name: 'French',    native_name: 'FranĂ„â€šĂ‚Â§ais' },
-  { code: 'es', name: 'Spanish',   native_name: 'EspaĂ„â€šĂ‚Â±ol' },
-  { code: 'ru', name: 'Russian',   native_name: 'Ă„ÂĂ‚Â ÄąÂĂ‚ÂÄąÂĂ‚ÂÄąÂĂ‚ÂĂ„ÂÄąĹşĂ„ÂĂ‚Â¸Ă„ÂĂ„â€¦' },
-  { code: 'zh', name: 'Chinese',   native_name: 'Ä‚Â¤Ă‚Â¸Ă‚Â­Ă„â€ˇĂ˘â‚¬â€śĂ˘â‚¬Ë‡' },
+  { code: 'fr', name: 'French',    native_name: 'Français' },
+  { code: 'es', name: 'Spanish',   native_name: 'Español' },
+  { code: 'ru', name: 'Russian',   native_name: 'Русский' },
+  { code: 'zh', name: 'Chinese',   native_name: '中文' },
 ];
 
 export default function LanguageScreen() {
@@ -41,7 +41,7 @@ export default function LanguageScreen() {
 
   const handleLanguageSelect = (langCode: string) => {
     setSelectedLanguage(langCode);
-    router.push('/tour-select');
+    router.push('/tour');
   };
 
   return (
