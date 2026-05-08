@@ -6,7 +6,7 @@ import { useApp } from '../context/AppContext';
 import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL } from '../constants/api';
 
-const CATHEDRAL_IMAGE = `${API_BASE_URL}/uploads/images/ee7d4914-1a92-4d41-9395-055b24511c6a.jpg`;
+const CATHEDRAL_IMAGE = `${API_BASE_URL}/uploads/images/fb2f9335-ab15-4f80-aa3d-2a1c35c93faa.jpg`;
 
 const FLAG_IMAGES: Record<string, string> = {
   sk: 'https://flagcdn.com/w80/sk.png',

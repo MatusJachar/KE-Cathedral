@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Image, Dimensions, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL } from '../constants/api';
 
 const { width, height } = Dimensions.get('window');
-const HERO_IMAGE = `${API_BASE_URL}/uploads/images/ee7d4914-1a92-4d41-9395-055b24511c6a.jpg`;
+const HERO_IMAGE = `${API_BASE_URL}/uploads/images/fb2f9335-ab15-4f80-aa3d-2a1c35c93faa.jpg`;
 
 const TOUR_TYPES = [
   {

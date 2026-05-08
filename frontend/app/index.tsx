@@ -3,29 +3,25 @@ import { View, Text, StyleSheet, Pressable, Image, Dimensions, ActivityIndicator
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
-import { Colors } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL } from '../constants/api';
 
 const { width, height } = Dimensions.get('window');
-const HERO_IMAGE = `${API_BASE_URL}/uploads/images/ee7d4914-1a92-4d41-9395-055b24511c6a.jpg`;
+const HERO_IMAGE = `${API_BASE_URL}/uploads/images/fb2f9335-ab15-4f80-aa3d-2a1c35c93faa.jpg`;
 const CATHEDRAL_MAP = 'https://raw.githubusercontent.com/MatusJachar/KE-Cathedral/main/frontend/assets/images/cathedral_map.png';
 
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { loadData, isLoading, tourStops, languages } = useApp();
+  const { loadData, isLoading } = useApp();
   const [showMapModal, setShowMapModal] = useState(false);
   const [mapRotation, setMapRotation] = useState(0);
-
-  const rotateMap = () => setMapRotation(r => (r + 90) % 360);
-  const resetMap = () => setMapRotation(0);
 
   useEffect(() => { loadData(); }, []);
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View style={styles.loader}>
         <ActivityIndicator size="large" color="#D4AF37" />
       </View>
     );
@@ -33,153 +29,134 @@ export default function HomeScreen() {
 
   return (
     <ScrollView style={styles.container} bounces={false} showsVerticalScrollIndicator={false}>
-      <View style={[styles.heroSection, { paddingTop: insets.top + 20 }]}>
-        <Image source={{ uri: HERO_IMAGE }} style={styles.heroBackground} resizeMode="cover" blurRadius={Platform.OS === 'web' ? 0 : 2} />
-        <View style={styles.heroOverlay} />
-        <View style={styles.heroContent}>
-          <Text style={styles.heroTitle}>Dóm sv. Alžbety</Text>
-          <Text style={styles.heroSubtitle}>Audio sprievodca</Text>
-          <Text style={styles.heroDesc}>Objavte históriu najväčšej gotickej katedrály na Slovensku.</Text>
-          <Pressable style={({ pressed }) => [styles.startButton, pressed && styles.startButtonPressed]} onPress={() => router.push('/language')}>
-            <Text style={styles.startButtonText}>Začať prehliadku</Text>
-            <Ionicons name="arrow-forward" size={22} color="#2D241E" />
-          </Pressable>
-      </View>
 
-      <View style={styles.menuSection}>
-        <View style={styles.iconRow}>
-          <Pressable style={styles.iconItem} onPress={() => router.push('/admin')}>
-            <View style={[styles.iconCircle, { backgroundColor: '#4CAF50' }]}>
-              <Ionicons name="settings" size={26} color="#fff" />
-            </View>
-            <Text style={styles.iconLabel}>Admin</Text>
-          </Pressable>
-          <Pressable style={styles.iconItem} onPress={() => router.push('/features/nearby')}>
-            <View style={[styles.iconCircle, { backgroundColor: '#2196F3' }]}>
-              <Ionicons name="location" size={24} color="#fff" />
-            </View>
-            <Text style={styles.iconLabel}>Okolie</Text>
-          </Pressable>
-          <Pressable style={styles.iconItem} onPress={() => router.push('/features/transport')}>
-            <View style={[styles.iconCircle, { backgroundColor: '#FF9800' }]}>
-              <Ionicons name="car" size={24} color="#fff" />
-            </View>
-            <Text style={styles.iconLabel}>Doprava</Text>
-          </Pressable>
-          <Pressable style={styles.iconItem} onPress={() => router.push('/features/partners')}>
-            <View style={[styles.iconCircle, { backgroundColor: '#9C27B0' }]}>
-              <Ionicons name="business" size={24} color="#fff" />
-            </View>
-            <Text style={styles.iconLabel}>Partneri</Text>
-          </Pressable>
-          <Pressable style={styles.iconItem} onPress={() => router.push('/features/support')}>
-            <View style={[styles.iconCircle, { backgroundColor: '#E91E63' }]}>
-              <Ionicons name="heart" size={24} color="#fff" />
-            </View>
-            <Text style={styles.iconLabel}>Podpora</Text>
+      {/* ── HERO ─────────────────────────────────────────────────── */}
+      <View style={{ height: height * 0.88 }}>
+        <Image source={{ uri: HERO_IMAGE }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+        <View style={styles.heroGradient} />
+        <View style={[styles.heroTop, { paddingTop: insets.top + 16 }]}>
+          <Text style={styles.label}>KOŠICE · SLOVENSKO</Text>
+        </View>
+        <View style={styles.heroBottom}>
+          <Text style={styles.heroTitle}>Dóm{'\n'}sv. Alžbety</Text>
+          <Text style={styles.heroSub}>Audio sprievodca</Text>
+          <Text style={styles.heroDesc}>Najväčší gotický chrám na Slovensku.{'\n'}Katedrála košického arcibiskupstva.</Text>
+          <Pressable
+            style={({ pressed }) => [styles.btn, pressed && styles.btnPressed]}
+            onPress={() => router.push('/language')}
+          >
+            <Text style={styles.btnText}>Začať prehliadku</Text>
+            <Ionicons name="arrow-forward" size={20} color="#2D241E" />
           </Pressable>
         </View>
       </View>
 
+      {/* ── MENU ─────────────────────────────────────────────────── */}
+      <View style={styles.menuCard}>
+        {[
+          { label: 'Admin',    icon: 'settings',  color: '#5C8A5C', route: '/admin' },
+          { label: 'Okolie',   icon: 'location',  color: '#4A7A9B', route: '/features/nearby' },
+          { label: 'Doprava',  icon: 'car',       color: '#C17A30', route: '/features/transport' },
+          { label: 'Partneri', icon: 'business',  color: '#7A5C8A', route: '/features/partners' },
+          { label: 'Podpora',  icon: 'heart',     color: '#9B4A6A', route: '/features/support' },
+        ].map(item => (
+          <Pressable key={item.label} style={styles.menuItem} onPress={() => router.push(item.route as any)}>
+            <View style={[styles.menuIcon, { backgroundColor: item.color }]}>
+              <Ionicons name={item.icon as any} size={22} color="#fff" />
+            </View>
+            <Text style={styles.menuLabel}>{item.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {/* ── MAPA ─────────────────────────────────────────────────── */}
       <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Ionicons name="map" size={20} color="#D4AF37" />
-          <Text style={styles.sectionTitle}>Mapa katedrály</Text>
+        <View style={styles.sectionRow}>
+          <Ionicons name="map" size={18} color="#D4AF37" />
+          <Text style={styles.sectionTitle}>Pôdorys katedrály</Text>
         </View>
-        <Pressable onPress={() => setShowMapModal(true)} style={styles.mapThumb}>
+        <Pressable onPress={() => setShowMapModal(true)} style={styles.mapBox}>
           <Image source={{ uri: CATHEDRAL_MAP }} style={styles.mapImage} resizeMode="contain" />
-          <View style={styles.mapOverlay}>
-            <Ionicons name="expand" size={22} color="#fff" />
-            <Text style={styles.mapOverlayText}>Klepnutím zväčšíte</Text>
+          <View style={styles.mapBadge}>
+            <Ionicons name="expand" size={16} color="#fff" />
+            <Text style={styles.mapBadgeText}>Zväčšiť</Text>
           </View>
         </Pressable>
       </View>
 
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Ionicons name="time" size={20} color="#D4AF37" />
-          <Text style={styles.sectionTitle}>Otváracie hodiny</Text>
-        </View>
-        <View style={styles.hoursCard}>
-          <View style={styles.hoursRow}>
-            <Ionicons name="sunny" size={16} color="#FF9800" />
-            <Text style={styles.hoursLabel}>Leto (Jún–Sep)</Text>
-            <Text style={styles.hoursValue}>9:00 – 18:00</Text>
-          </View>
-          <View style={styles.hoursDivider} />
-          <View style={styles.hoursRow}>
-            <Ionicons name="rainy" size={16} color="#607D8B" />
-            <Text style={styles.hoursLabel}>Zima (Okt, Nov, Apr)</Text>
-            <Text style={styles.hoursValue}>9:00 – 16:00</Text>
-          </View>
-        </View>
-        <Pressable style={styles.moreBtn} onPress={() => router.push('/features/info')}>
-          <Text style={styles.moreBtnText}>Vstupné, info a doprava</Text>
-          <Ionicons name="arrow-forward" size={14} color="#D4AF37" />
-        </Pressable>
-      </View>
+      <View style={{ height: insets.bottom + 40 }} />
 
-      <View style={{ height: insets.bottom + 32 }} />
-
+      {/* ── MAP MODAL ────────────────────────────────────────────── */}
       <Modal visible={showMapModal} transparent animationType="fade">
-        <View style={styles.mapModalOverlay}>
-          <View style={[styles.mapModalToolbar, { top: insets.top + 12 }]}>
-            <Pressable style={styles.mapModalBtn} onPress={rotateMap}>
-              <Ionicons name="refresh" size={22} color="#fff" />
-              <Text style={styles.mapModalBtnText}>Otočiť</Text>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalToolbar, { top: insets.top + 12 }]}>
+            <Pressable style={styles.modalBtn} onPress={() => setMapRotation(r => (r + 90) % 360)}>
+              <Ionicons name="refresh" size={20} color="#fff" />
+              <Text style={styles.modalBtnText}>Otočiť</Text>
             </Pressable>
-            <Pressable style={[styles.mapModalBtn, { backgroundColor: 'rgba(255,50,50,0.6)' }]} onPress={() => { setShowMapModal(false); resetMap(); }}>
-              <Ionicons name="close" size={22} color="#fff" />
-              <Text style={styles.mapModalBtnText}>Zavrieť</Text>
+            <Pressable style={[styles.modalBtn, { backgroundColor: 'rgba(180,40,40,0.7)' }]} onPress={() => { setShowMapModal(false); setMapRotation(0); }}>
+              <Ionicons name="close" size={20} color="#fff" />
+              <Text style={styles.modalBtnText}>Zavrieť</Text>
             </Pressable>
           </View>
-          <Image source={{ uri: CATHEDRAL_MAP }} style={[styles.mapModalImage, { transform: [{ rotate: `${mapRotation}deg` }] }]} resizeMode="contain" />
+          <Image source={{ uri: CATHEDRAL_MAP }} style={[styles.modalImage, { transform: [{ rotate: `${mapRotation}deg` }] }]} resizeMode="contain" />
         </View>
       </Modal>
-    </View>
-  </ScrollView>
-);
+
+    </ScrollView>
+  );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  heroSection: { minHeight: height * 0.72, position: 'relative', justifyContent: 'center', alignItems: 'center' },
-  heroBackground: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
-  heroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(45,36,30,0.55)' },
-  heroContent: { alignItems: 'center', paddingHorizontal: 28, zIndex: 1 },
-  heroTitle: { fontSize: 28, fontWeight: '800', color: '#fff', textAlign: 'center', fontFamily: 'serif' },
-  heroSubtitle: { fontSize: 16, color: '#D4AF37', fontWeight: '600', letterSpacing: 2, marginTop: 4 },
-  heroDesc: { fontSize: 14, color: 'rgba(255,255,255,0.8)', textAlign: 'center', lineHeight: 21, marginTop: 16 },
-  startButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#D4AF37', paddingVertical: 14, paddingHorizontal: 40, borderRadius: 30, marginTop: 24, gap: 10 },
-  startButtonPressed: { backgroundColor: '#B8960B', transform: [{ scale: 0.97 }] },
-  startButtonText: { fontSize: 18, fontWeight: '800', color: '#2D241E' },
-  statsRow: { flexDirection: 'row', alignItems: 'center', marginTop: 20, gap: 16 },
-  statItem: { alignItems: 'center' },
-  statNumber: { fontSize: 20, fontWeight: '800', color: '#fff' },
-  statLabel: { fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
-  statDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: '#D4AF37' },
-  menuSection: { backgroundColor: Colors.background, paddingTop: 24, paddingBottom: 16, paddingHorizontal: 12, borderTopLeftRadius: 24, borderTopRightRadius: 24, marginTop: -20 },
-  iconRow: { flexDirection: 'row', justifyContent: 'space-around' },
-  iconItem: { alignItems: 'center', width: '20%', paddingVertical: 4 },
-  iconCircle: { width: 52, height: 52, borderRadius: 26, justifyContent: 'center', alignItems: 'center', marginBottom: 6 },
-  iconLabel: { fontSize: 11, fontWeight: '600', color: Colors.text.secondary, textAlign: 'center' },
-  section: { backgroundColor: Colors.background, paddingHorizontal: 16, paddingTop: 16 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: Colors.text.primary },
-  mapThumb: { height: 200, borderRadius: 14, overflow: 'hidden', position: 'relative', backgroundColor: '#E0E0E0' },
-  mapImage: { width: '100%', height: '100%' },
-  mapOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(0,0,0,0.5)', paddingVertical: 8 },
-  mapOverlayText: { color: '#fff', fontSize: 13, fontWeight: '600' },
-  hoursCard: { backgroundColor: Colors.white, borderRadius: 14, padding: 14 },
-  hoursRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  hoursLabel: { flex: 1, fontSize: 13, color: Colors.text.secondary },
-  hoursValue: { fontSize: 14, fontWeight: '700', color: Colors.text.primary },
-  hoursDivider: { height: 1, backgroundColor: Colors.borderLight, marginVertical: 10 },
-  moreBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, gap: 6 },
-  moreBtnText: { fontSize: 13, fontWeight: '600', color: '#D4AF37' },
-  mapModalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', justifyContent: 'center', alignItems: 'center' },
-  mapModalToolbar: { position: 'absolute', right: 16, zIndex: 10, flexDirection: 'row', gap: 12 },
-  mapModalBtn: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8, gap: 2 },
-  mapModalBtnText: { color: '#fff', fontSize: 11, fontWeight: '600' },
-  mapModalImage: { width: width, height: height * 0.85 },
+  container:      { flex: 1, backgroundColor: '#FDFBF7' },
+  loader:         { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FDFBF7' },
+
+  // Hero
+  heroGradient:   { ...StyleSheet.absoluteFillObject, background: 'transparent',
+                    backgroundColor: 'transparent',
+                    // gradient simulácia cez overlay vrstvy
+                  },
+  heroTop:        { position: 'absolute', top: 0, left: 0, right: 0, paddingHorizontal: 24 },
+  label:          { fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.7)', letterSpacing: 3 },
+  heroBottom:     { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 24, paddingBottom: 36,
+                    backgroundColor: 'rgba(0,0,0,0)', },
+  heroTitle:      { fontSize: 48, fontWeight: '800', color: '#fff', lineHeight: 52,
+                    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+                    textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 8 },
+  heroSub:        { fontSize: 13, color: '#D4AF37', fontWeight: '700', letterSpacing: 3, marginTop: 6, marginBottom: 10 },
+  heroDesc:       { fontSize: 14, color: 'rgba(255,255,255,0.82)', lineHeight: 20, marginBottom: 24 },
+  btn:            { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#D4AF37',
+                    paddingVertical: 14, paddingHorizontal: 32, borderRadius: 32, alignSelf: 'flex-start' },
+  btnPressed:     { backgroundColor: '#B8960B', transform: [{ scale: 0.97 }] },
+  btnText:        { fontSize: 16, fontWeight: '800', color: '#2D241E' },
+
+  // Menu
+  menuCard:       { flexDirection: 'row', justifyContent: 'space-around', backgroundColor: '#fff',
+                    marginHorizontal: 16, marginTop: -28, borderRadius: 20, paddingVertical: 20,
+                    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08,
+                    shadowRadius: 12, elevation: 6 },
+  menuItem:       { alignItems: 'center', gap: 6 },
+  menuIcon:       { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+  menuLabel:      { fontSize: 11, fontWeight: '600', color: '#44403c' },
+
+  // Sekcie
+  section:        { paddingHorizontal: 16, paddingTop: 28 },
+  sectionRow:     { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  sectionTitle:   { fontSize: 17, fontWeight: '700', color: '#1C1917', fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif' },
+
+  // Mapa
+  mapBox:         { height: 220, borderRadius: 16, overflow: 'hidden', backgroundColor: '#EDE8DF' },
+  mapImage:       { width: '100%', height: '100%' },
+  mapBadge:       { position: 'absolute', bottom: 10, right: 10, flexDirection: 'row', alignItems: 'center',
+                    gap: 4, backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 10, paddingVertical: 5,
+                    borderRadius: 20 },
+  mapBadgeText:   { color: '#fff', fontSize: 12, fontWeight: '600' },
+
+  // Modal
+  modalOverlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.94)', justifyContent: 'center', alignItems: 'center' },
+  modalToolbar:   { position: 'absolute', right: 16, zIndex: 10, flexDirection: 'row', gap: 10 },
+  modalBtn:       { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.18)',
+                    borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
+  modalBtnText:   { color: '#fff', fontSize: 12, fontWeight: '600' },
+  modalImage:     { width: width, height: height * 0.85 },
 });
