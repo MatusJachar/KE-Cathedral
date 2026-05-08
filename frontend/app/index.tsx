@@ -136,8 +136,9 @@ export default function HomeScreen() {
           <Image source={{ uri: CATHEDRAL_MAP }} style={[styles.mapModalImage, { transform: [{ rotate: `${mapRotation}deg` }] }]} resizeMode="contain" />
         </View>
       </Modal>
-    </ScrollView>
-  );
+    </View>
+  </ScrollView>
+);
 }
 
 const styles = StyleSheet.create({
