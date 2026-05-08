@@ -1,123 +1,107 @@
 ﻿import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Image, Dimensions, Platform } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useApp } from '../context/AppContext';
-import { Colors } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
+import { useApp } from '../context/AppContext';
 import { API_BASE_URL } from '../constants/api';
-
-const { width } = Dimensions.get('window');
-const CATHEDRAL_IMAGE = `${API_BASE_URL}/uploads/images/ee7d4914-1a92-4d41-9395-055b24511c6a.jpg`;
-
-const STOP_ICONS: Record<number, { icon: string; bg: string }> = {
-  1:  { icon: 'enter',         bg: '#D4AF37' },
-  2:  { icon: 'star',          bg: '#D4AF37' },
-  3:  { icon: 'water',         bg: '#D4AF37' },
-  4:  { icon: 'flower',        bg: '#D4AF37' },
-  5:  { icon: 'key',           bg: '#D4AF37' },
-  6:  { icon: 'git-merge',     bg: '#D4AF37' },
-  7:  { icon: 'flame',         bg: '#D4AF37' },
-  8:  { icon: 'add-circle',    bg: '#D4AF37' },
-  9:  { icon: 'image',         bg: '#D4AF37' },
-  10: { icon: 'musical-notes', bg: '#D4AF37' },
-  11: { icon: 'sunny',         bg: '#D4AF37' },
-  12: { icon: 'ribbon',        bg: '#D4AF37' },
-  13: { icon: 'person',        bg: '#D4AF37' },
-  14: { icon: 'business',      bg: '#D4AF37' },
-};
 
 export default function TourScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { tourStops, selectedLanguage } = useApp();
 
-  const filteredStops = useMemo(() => {
-    return tourStops
-      .filter(s => [1,2,3,4,5,6,7,8,9,10,11,12,13,14].includes(s.stop_number))
-      .sort((a, b) => a.stop_number - b.stop_number);
-  }, [tourStops]);
-
   const getTranslation = (stop: any) => {
-    const lang = selectedLanguage;
-    const fallback = 'en';
-    const content = stop.content?.[lang] || stop.content?.[fallback] || Object.values(stop.content || {})[0] || {};
-    const audioUrl = stop.audio?.[lang] || stop.audio?.[fallback] || Object.values(stop.audio || {})[0] || null;
+    const lang = selectedLanguage || 'sk';
+    const translation = stop.translations?.find((t: any) => t.language_code === lang) || stop.translations?.[0] || {};
     return {
-      title: content?.title || '',
-      short_description: content?.short_description || content?.description || '',
-      audio_url: audioUrl,
+      title: translation?.title || `Zastávka ${stop.stop_number}`,
+      audio_url: translation?.audio_url || null,
     };
   };
 
-  return (
-    <View style={styles.container}>
-      <Image source={{ uri: CATHEDRAL_IMAGE }} style={styles.bgImage} resizeMode="cover" blurRadius={Platform.OS === 'web' ? 0 : 5} />
-      <View style={styles.bgOverlay} />
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#2D241E" />
-        </Pressable>
-        <View style={styles.tourBadge}>
-          <Text style={styles.tourBadgeText}>Kompletná prehliadka</Text>
+  const stops = useMemo(() => {
+    return tourStops
+      .filter((s: any) => [1,2,3,4,5,6,7,8,9,10,11,12,13,14].includes(s.stop_number))
+      .sort((a: any, b: any) => a.stop_number - b.stop_number);
+  }, [tourStops]);
+
+  const renderStop = ({ item }: { item: any }) => {
+    const trans = getTranslation(item);
+    const imageUrl = item.image_url
+      ? `${API_BASE_URL.replace('/api', '')}${item.image_url}`
+      : null;
+    const hasAudio = !!trans.audio_url;
+
+    return (
+      <TouchableOpacity
+        style={styles.stopCard}
+        onPress={() => router.push(`/tour/${item.id}`)}
+        activeOpacity={0.8}
+      >
+        <View style={styles.imageContainer}>
+          {imageUrl ? (
+            <Image source={{ uri: imageUrl }} style={styles.stopImage} contentFit="cover" />
+          ) : (
+            <View style={[styles.stopImage, styles.imagePlaceholder]}>
+              <Ionicons name="image-outline" size={28} color="#D4AF37" />
+            </View>
+          )}
+          <View style={styles.stopNumberBadge}>
+            <Text style={styles.stopNumberText}>{item.stop_number}</Text>
+          </View>
         </View>
+        <View style={styles.stopInfo}>
+          <Text style={styles.stopTitle} numberOfLines={2}>{trans.title}</Text>
+          {hasAudio && (
+            <View style={styles.metaItem}>
+              <Ionicons name="headset-outline" size={14} color="#D4AF37" />
+              <Text style={[styles.metaText, { color: '#D4AF37' }]}>Audio</Text>
+            </View>
+          )}
+        </View>
+        <Ionicons name="chevron-forward" size={24} color="#78716c" />
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#1C1917" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Zastávky katedrály</Text>
         <View style={{ width: 44 }} />
       </View>
-      <ScrollView style={styles.scrollView} contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 24 }]} showsVerticalScrollIndicator={false}>
-        <View style={styles.sectionHeader}>
-          <Ionicons name="navigate" size={18} color="#D4AF37" />
-          <Text style={styles.sectionTitle}>Zastávky</Text>
-          <Text style={styles.sectionCount}>{filteredStops.length}</Text>
-        </View>
-        {filteredStops.map((stop) => {
-          const trans = getTranslation(stop);
-          const iconDef = STOP_ICONS[stop.stop_number] || { icon: 'location', bg: '#D4AF37' };
-          const hasAudio = !!trans.audio_url;
-          return (
-            <Pressable key={stop.id} style={({ pressed }) => [styles.stopCard, pressed && styles.stopCardPressed]} onPress={() => router.push(`/tour/${stop.id}`)}>
-              <View style={[styles.stopIcon, { backgroundColor: iconDef.bg }]}>
-                <Ionicons name={iconDef.icon as any} size={20} color="#2D241E" />
-              </View>
-              <View style={styles.stopContent}>
-                <View style={styles.stopTopRow}>
-                  <Text style={styles.stopNumber}>#{stop.stop_number}</Text>
-                  {hasAudio && <View style={styles.audioBadge}><Ionicons name="headset" size={10} color="#D4AF37" /></View>}
-                </View>
-                <Text style={styles.stopTitle} numberOfLines={1}>{trans.title || 'Zastávka'}</Text>
-                <Text style={styles.stopDesc} numberOfLines={2}>{trans.short_description}</Text>
-              </View>
-              <View style={styles.playIcon}>
-                <Ionicons name="chevron-forward" size={18} color="#D4AF37" />
-              </View>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+      <FlatList
+        data={stops}
+        renderItem={renderStop}
+        keyExtractor={(item) => String(item.id)}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#2D241E' },
-  bgImage: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
-  bgOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(45, 36, 30, 0.72)' },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 12, zIndex: 2 },
-  backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(253,251,247,0.15)', justifyContent: 'center', alignItems: 'center' },
-  tourBadge: { flex: 1, alignSelf: 'center', marginHorizontal: 12, paddingVertical: 6, paddingHorizontal: 16, borderRadius: 12, alignItems: 'center', backgroundColor: '#D4AF37' },
-  tourBadgeText: { fontSize: 14, fontWeight: '800', color: '#2D241E' },
-  scrollView: { flex: 1, zIndex: 1 },
-  scrollContent: { paddingHorizontal: 16 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14, marginTop: 4 },
-  sectionTitle: { fontSize: 18, fontWeight: '800', color: '#FDFBF7' },
-  sectionCount: { fontSize: 13, fontWeight: '700', color: 'rgba(253,251,247,0.4)', marginLeft: 'auto' },
-  stopCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(253,251,247,0.08)', borderRadius: 16, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: 'rgba(212,175,55,0.15)' },
-  stopCardPressed: { backgroundColor: 'rgba(253,251,247,0.14)', borderColor: 'rgba(212,175,55,0.4)' },
-  stopIcon: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  stopContent: { flex: 1 },
-  stopTopRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
-  stopNumber: { fontSize: 11, fontWeight: '800', color: 'rgba(253,251,247,0.4)' },
-  audioBadge: { width: 18, height: 18, borderRadius: 9, backgroundColor: 'rgba(212,175,55,0.2)', justifyContent: 'center', alignItems: 'center' },
-  stopTitle: { fontSize: 16, fontWeight: '700', color: '#FDFBF7', marginBottom: 3 },
-  stopDesc: { fontSize: 12, color: 'rgba(253,251,247,0.5)', lineHeight: 17 },
-  playIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(212,175,55,0.15)', justifyContent: 'center', alignItems: 'center', marginLeft: 8 },
+  container: { flex: 1, backgroundColor: '#FDFBF7' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#E5E0D8' },
+  backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#F5F5DC', justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { fontSize: 20, fontWeight: '700', color: '#1C1917', fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif' },
+  listContent: { padding: 16 },
+  stopCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#E5E0D8' },
+  imageContainer: { position: 'relative' },
+  stopImage: { width: 80, height: 80, borderRadius: 12 },
+  imagePlaceholder: { backgroundColor: '#F3EBE3', justifyContent: 'center', alignItems: 'center' },
+  stopNumberBadge: { position: 'absolute', top: -6, left: -6, width: 28, height: 28, borderRadius: 14, backgroundColor: '#D4AF37', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#FFFFFF' },
+  stopNumberText: { fontSize: 12, fontWeight: '700', color: '#FFFFFF' },
+  stopInfo: { flex: 1, marginLeft: 12 },
+  stopTitle: { fontSize: 16, fontWeight: '700', color: '#1C1917', marginBottom: 8 },
+  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  metaText: { fontSize: 12, color: '#78716c' },
+  separator: { height: 12 },
 });

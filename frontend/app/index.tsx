@@ -44,23 +44,6 @@ export default function HomeScreen() {
             <Text style={styles.startButtonText}>Začať prehliadku</Text>
             <Ionicons name="arrow-forward" size={22} color="#2D241E" />
           </Pressable>
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{languages.length || 9}</Text>
-              <Text style={styles.statLabel}>Jazykov</Text>
-            </View>
-            <View style={styles.statDot} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{tourStops.length || 14}</Text>
-              <Text style={styles.statLabel}>Zastávok</Text>
-            </View>
-            <View style={styles.statDot} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>FREE</Text>
-              <Text style={styles.statLabel}>Zadarmo</Text>
-            </View>
-          </View>
-        </View>
       </View>
 
       <View style={styles.menuSection}>
