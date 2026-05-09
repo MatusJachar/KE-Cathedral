@@ -124,9 +124,9 @@ const styles = StyleSheet.create({
                     fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
                     textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 8 },
   heroSub:        { fontSize: 13, color: '#D4AF37', fontWeight: '700', letterSpacing: 3, marginTop: 6, marginBottom: 10 },
-  heroDesc:       { fontSize: 14, color: 'rgba(255,255,255,0.82)', lineHeight: 20, marginBottom: 24 },
+  heroDesc:       { fontSize: 14, color: '#fff', lineHeight: 22, marginBottom: 20, textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   btn:            { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#D4AF37',
-                    paddingVertical: 14, paddingHorizontal: 32, borderRadius: 32, alignSelf: 'flex-start' },
+                    paddingVertical: 14, paddingHorizontal: 24, borderRadius: 32, alignSelf: 'flex-start' },
   btnPressed:     { backgroundColor: '#B8960B', transform: [{ scale: 0.97 }] },
   btnText:        { fontSize: 16, fontWeight: '800', color: '#2D241E' },
 
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   menuLabel:      { fontSize: 11, fontWeight: '600', color: '#44403c' },
 
   // Sekcie
-  section:        { paddingHorizontal: 16, paddingTop: 28 },
+  section:        { paddingHorizontal: 16, paddingTop: 16 },
   sectionRow:     { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
   sectionTitle:   { fontSize: 17, fontWeight: '700', color: '#1C1917', fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif' },
 

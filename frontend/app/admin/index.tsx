@@ -1,129 +1,131 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { Colors } from '../../constants/colors';
 import { API_BASE_URL } from '../../constants/api';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function AdminLoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [isRegister, setIsRegister] = useState(false);
+  const [adminCode, setAdminCode] = useState('');
 
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please enter both email and password');
+    if (!username || !password) {
+      setError('Please fill in all fields');
       return;
     }
-
-    setIsLoading(true);
+    setLoading(true);
+    setError('');
     try {
-      const response = await axios.post(`${API_BASE_URL}/admin/login`, {
-        email: email.trim(),
-        password: password.trim(),
-      });
-
-      if (response.data.access_token) {
-        Alert.alert('Success', 'Login successful!', [
-          { text: 'OK', onPress: () => router.push('/admin/dashboard') },
-        ]);
-      }
-    } catch (error: any) {
-      const message = error.response?.data?.detail || 'Login failed. Please check your credentials.';
-      Alert.alert('Error', message);
+      const res = await axios.post(`${API_BASE_URL}/admin/login`, { username, password });
+      await AsyncStorage.setItem('adminToken', res.data.access_token);
+      router.replace('/admin/dashboard');
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || 'Login failed');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    if (!username || !password || !adminCode) {
+      setError('Please fill in all fields');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await axios.post(`${API_BASE_URL}/admin/register`, { username, password, admin_code: adminCode });
+      await AsyncStorage.setItem('adminToken', res.data.access_token);
+      router.replace('/admin/dashboard');
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || 'Registration failed');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View style={[styles.content, { paddingTop: insets.top }]}>
-        {/* Header */}
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <View style={[styles.content, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }]}>
+        <Pressable style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color={Colors.text.primary} />
+        </Pressable>
+
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="arrow-back" size={24} color={Colors.text.primary} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Admin Login</Text>
-          <View style={styles.placeholder} />
+          <Ionicons name="settings" size={48} color={Colors.accent} />
+          <Text style={styles.title}>Admin Panel</Text>
+          <Text style={styles.subtitle}>{isRegister ? 'Create admin account' : 'Sign in to manage content'}</Text>
         </View>
 
-        {/* Login Form */}
-        <View style={styles.formContainer}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="shield-checkmark" size={48} color={Colors.accent} />
+        {error ? (
+          <View style={styles.errorBox}>
+            <Ionicons name="alert-circle" size={20} color={Colors.error} />
+            <Text style={styles.errorText}>{error}</Text>
           </View>
-          
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to manage the tour</Text>
+        ) : null}
 
-          <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={20} color={Colors.text.light} />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor={Colors.text.light}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
+        <View style={styles.form}>
+          <Text style={styles.label}>Username</Text>
+          <TextInput
+            style={styles.input}
+            value={username}
+            onChangeText={setUsername}
+            placeholder="Enter username"
+            placeholderTextColor={Colors.text.light}
+            autoCapitalize="none"
+          />
 
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color={Colors.text.light} />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor={Colors.text.light}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Ionicons
-                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                size={20}
-                color={Colors.text.light}
+          <Text style={styles.label}>Password</Text>
+          <TextInput
+            style={styles.input}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Enter password"
+            placeholderTextColor={Colors.text.light}
+            secureTextEntry
+          />
+
+          {isRegister && (
+            <>
+              <Text style={styles.label}>Admin Code</Text>
+              <TextInput
+                style={styles.input}
+                value={adminCode}
+                onChangeText={setAdminCode}
+                placeholder="Enter admin registration code"
+                placeholderTextColor={Colors.text.light}
+                secureTextEntry
               />
-            </TouchableOpacity>
-          </View>
+            </>
+          )}
 
-          <TouchableOpacity
-            style={styles.loginButton}
-            onPress={handleLogin}
-            disabled={isLoading}
-            activeOpacity={0.9}
+          <Pressable
+            style={({ pressed }) => [styles.loginButton, pressed && styles.loginButtonPressed, loading && styles.loginButtonDisabled]}
+            onPress={isRegister ? handleRegister : handleLogin}
+            disabled={loading}
           >
-            {isLoading ? (
-              <ActivityIndicator color={Colors.white} />
+            {loading ? (
+              <ActivityIndicator color={Colors.black} />
             ) : (
-              <Text style={styles.loginButtonText}>Sign In</Text>
+              <Text style={styles.loginButtonText}>{isRegister ? 'Register' : 'Sign In'}</Text>
             )}
-          </TouchableOpacity>
+          </Pressable>
+
+          <Pressable onPress={() => { setIsRegister(!isRegister); setError(''); }}>
+            <Text style={styles.switchText}>
+              {isRegister ? 'Already have an account? Sign in' : 'Need an account? Register'}
+            </Text>
+          </Pressable>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -131,96 +133,20 @@ export default function AdminLoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  content: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.stone[200],
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.stone[100],
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontFamily: 'Cinzel_700Bold',
-    color: Colors.text.primary,
-  },
-  placeholder: {
-    width: 44,
-  },
-  formContainer: {
-    flex: 1,
-    padding: 24,
-    justifyContent: 'center',
-  },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.gold[100],
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center',
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 28,
-    fontFamily: 'Cinzel_700Bold',
-    color: Colors.text.primary,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontFamily: 'Lato_400Regular',
-    color: Colors.text.light,
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-    borderWidth: 1,
-    borderColor: Colors.stone[200],
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    height: 56,
-  },
-  input: {
-    flex: 1,
-    marginLeft: 12,
-    fontSize: 16,
-    fontFamily: 'Lato_400Regular',
-    color: Colors.text.primary,
-  },
-  loginButton: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  loginButtonText: {
-    fontSize: 16,
-    fontFamily: 'Cinzel_700Bold',
-    color: Colors.white,
-    letterSpacing: 1,
-  },
+  container: { flex: 1, backgroundColor: Colors.background },
+  content: { flex: 1, paddingHorizontal: 24 },
+  backButton: { width: 44, height: 44, justifyContent: 'center', alignItems: 'center' },
+  header: { alignItems: 'center', paddingVertical: 24 },
+  title: { fontSize: 28, fontWeight: '800', color: Colors.accent, marginTop: 12 },
+  subtitle: { fontSize: 14, color: Colors.text.secondary, marginTop: 4 },
+  errorBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,82,82,0.1)', borderRadius: 12, padding: 12, marginBottom: 16, gap: 8 },
+  errorText: { color: Colors.error, fontSize: 14 },
+  form: { gap: 8 },
+  label: { fontSize: 14, fontWeight: '600', color: Colors.text.secondary, marginTop: 8 },
+  input: { backgroundColor: Colors.backgroundLight, borderRadius: 12, padding: 16, fontSize: 16, color: Colors.text.primary, borderWidth: 1, borderColor: Colors.borderLight },
+  loginButton: { backgroundColor: Colors.accent, borderRadius: 28, paddingVertical: 16, alignItems: 'center', marginTop: 24 },
+  loginButtonPressed: { backgroundColor: Colors.accentDark },
+  loginButtonDisabled: { opacity: 0.7 },
+  loginButtonText: { fontSize: 18, fontWeight: '800', color: Colors.black },
+  switchText: { color: Colors.accent, textAlign: 'center', marginTop: 16, fontSize: 14 },
 });
