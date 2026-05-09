@@ -1,71 +1,77 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Linking } from 'react-native';
+﻿import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView, Linking, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import { API_BASE_URL } from '../../constants/api';
 
-const PARTNERS = [
-  { name: 'Košické arcibiskupstvo', description: 'Rímskokatolická cirkev — arcidiecéza Košice. Správca Dómu sv. Alžbety.', icon: 'business', color: '#D4AF37', web: 'https://www.ke-arcidieceza.sk' },
-  { name: 'Mesto Košice', description: 'Hlavné mesto Východného Slovenska.', icon: 'home', color: '#2196F3', web: 'https://www.kosice.sk' },
-  { name: 'Visit Košice', description: 'Oficiálny turistický portál mesta Košice.', icon: 'map', color: '#4CAF50', web: 'https://www.visitkosice.eu' },
-  { name: 'Slovakia Travel', description: 'Oficiálna slovenská turistická organizácia.', icon: 'airplane', color: '#FF5722', web: 'https://www.slovakia.travel' },
-];
+const C = { bg: '#FDFBF7', gold: '#D4AF37', dark: '#2D241E', light: '#9C8B6E', border: '#EDE8DF', white: '#fff' };
 
 export default function PartnersScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [partners, setPartners] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    axios.get(`${API_BASE_URL}/partners`)
+      .then(res => setPartners(res.data))
+      .catch(() => setPartners([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text.primary} />
+        <Pressable style={styles.backBtn} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color={C.dark} />
         </Pressable>
         <Text style={styles.headerTitle}>Partneri</Text>
         <View style={{ width: 44 }} />
       </View>
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]} showsVerticalScrollIndicator={false}>
-        <Text style={styles.mainTitle}>Naši partneri</Text>
-        <Text style={styles.subtitle}>Dóm sv. Alžbety spolupracuje s miestnymi organizáciami.</Text>
-        {PARTNERS.map((partner, idx) => (
-          <View key={idx} style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={[styles.iconCircle, { backgroundColor: partner.color }]}>
-                <Ionicons name={partner.icon as any} size={22} color="#fff" />
-              </View>
-              <Text style={styles.partnerName}>{partner.name}</Text>
-            </View>
-            <Text style={styles.partnerDesc}>{partner.description}</Text>
-            <Pressable style={styles.webBtn} onPress={() => Linking.openURL(partner.web)}>
-              <Ionicons name="globe-outline" size={16} color="#fff" />
-              <Text style={styles.webBtnText}>Navštíviť webstránku</Text>
-            </Pressable>
-          </View>
-        ))}
-        <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color="#D4AF37" />
-          <Text style={styles.infoText}>Máte záujem o partnerstvo? Kontaktujte nás.</Text>
+
+      {loading ? (
+        <View style={styles.centered}><ActivityIndicator size="large" color={C.gold} /></View>
+      ) : partners.length === 0 ? (
+        <View style={styles.centered}>
+          <Ionicons name="business-outline" size={48} color={C.light} />
+          <Text style={styles.emptyText}>Žiadni partneri</Text>
         </View>
-      </ScrollView>
+      ) : (
+        <ScrollView contentContainerStyle={styles.content}>
+          {partners.map((p: any, i: number) => (
+            <Pressable key={i} style={styles.card} onPress={() => p.website ? Linking.openURL(p.website) : null}>
+              <View style={[styles.icon, { backgroundColor: C.gold }]}>
+                <Ionicons name="business" size={24} color={C.white} />
+              </View>
+              <View style={styles.info}>
+                <Text style={styles.name}>{p.name}</Text>
+                <Text style={styles.desc}>{p.description}</Text>
+                {p.website && <Text style={styles.web}>{p.website.replace('https://', '')}</Text>}
+              </View>
+              {p.website && <Ionicons name="open-outline" size={18} color={C.light} />}
+            </Pressable>
+          ))}
+          <View style={{ height: 32 }} />
+        </ScrollView>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8 },
-  backButton: { width: 44, height: 44, justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 18, fontWeight: '700', color: Colors.text.primary },
-  content: { paddingHorizontal: 16 },
-  mainTitle: { fontSize: 20, fontWeight: '800', color: Colors.text.primary, textAlign: 'center', marginBottom: 8, marginTop: 8 },
-  subtitle: { fontSize: 14, color: Colors.text.secondary, textAlign: 'center', lineHeight: 21, marginBottom: 20 },
-  card: { backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 12, elevation: 2 },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 },
-  iconCircle: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
-  partnerName: { fontSize: 16, fontWeight: '700', color: Colors.text.primary, flex: 1 },
-  partnerDesc: { fontSize: 13, color: Colors.text.secondary, lineHeight: 20, marginBottom: 12 },
-  webBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#2D241E', borderRadius: 10, paddingVertical: 10, gap: 8 },
-  webBtnText: { fontSize: 13, fontWeight: '600', color: '#fff' },
-  infoBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: '#FFF8E1', borderRadius: 12, padding: 14, marginTop: 8 },
-  infoText: { fontSize: 13, color: Colors.text.secondary, flex: 1, lineHeight: 20 },
+  container:   { flex: 1, backgroundColor: C.bg },
+  header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.border },
+  backBtn:     { width: 44, height: 44, justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { fontSize: 20, fontWeight: '700', color: C.dark },
+  centered:    { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
+  emptyText:   { fontSize: 16, color: C.light },
+  content:     { padding: 16, gap: 12 },
+  card:        { flexDirection: 'row', alignItems: 'center', backgroundColor: C.white, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: C.border, gap: 14 },
+  icon:        { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+  info:        { flex: 1 },
+  name:        { fontSize: 15, fontWeight: '700', color: C.dark, marginBottom: 4 },
+  desc:        { fontSize: 13, color: C.light, marginBottom: 4, lineHeight: 18 },
+  web:         { fontSize: 12, color: C.gold, fontWeight: '600' },
 });
